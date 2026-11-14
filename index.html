@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M29 Management</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--ink:#172033;--muted:#6b7485;--line:#e6eaf0;--blue:#2457d6;--green:#14804a;--red:#c53b43;--amber:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Arial,sans-serif}
+header{background:#152544;color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0}header small{color:#c7d2e5}.wrap{max-width:1450px;margin:auto;padding:20px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}button,.filebtn{border:0;border-radius:9px;padding:10px 14px;font-weight:600;cursor:pointer;background:var(--blue);color:white}
+button.secondary,.filebtn.secondary{background:#e9eefb;color:#23417d}button.ghost{background:white;color:#34415a;border:1px solid var(--line)}
+input,select{padding:10px;border:1px solid #d9dfeb;border-radius:8px;background:white;color:var(--ink);min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px;box-shadow:0 2px 7px #17203308}
+.kpi-label{font-size:12px;color:var(--muted)}.kpi-value{font-size:27px;font-weight:700;margin-top:6px}.teamname{font-size:12px;color:var(--muted);font-weight:650}.teamcount{font-size:22px;font-weight:750;margin:6px 0}.bar{height:7px;border-radius:9px;background:#edf1f6;overflow:hidden}.bar>i{display:block;height:100%;background:var(--green);border-radius:9px;transition:width .25s}.teammeta{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:8px}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:9px;margin-bottom:15px}
+.layout{display:block}
+h2{font-size:16px;margin:0 0 12px}.timeline{display:grid;gap:12px}.time-row{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:start}.time-select{position:relative;z-index:2;display:inline-block;pointer-events:auto;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:750;padding:6px 8px;margin:-6px -8px;border-radius:7px;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:#b8c7df;text-underline-offset:3px}.time-select:hover{color:var(--blue);background:#f1f5ff}.time-select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.time-select[aria-pressed="true"]{color:var(--blue);text-decoration-color:var(--blue)}.time-items{border-left:2px solid #dce5f2;padding:0 0 8px 14px;position:relative}.time-items:before{content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px #dce5f2}.time-row.active .time-items{border-left-color:var(--blue)}.time-row.active .time-items:before{background:var(--green);box-shadow:0 0 0 2px #d8f0e5}.time-count{font-size:11px;color:var(--muted);margin-bottom:5px}.time-kpms{display:flex;flex-wrap:wrap;gap:6px}.time-kpms span{background:#f1f5fb;color:#29477e;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:650}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:white}
+table{border-collapse:collapse;width:100%;min-width:930px}th,td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{background:#f7f8fb;color:#566176;font-size:12px;position:sticky;top:0}tr:last-child td{border:0}
+.pill{display:inline-flex;align-items:center;justify-content:center;min-width:30px;padding:4px 8px;border-radius:20px;font-weight:700}.yes{background:#e6f6ed;color:var(--green)}.no{background:#fdebed;color:var(--red)}.unknown{background:#eef1f5;color:#697386}
+.rowactions button{padding:6px 9px;font-size:12px}.hint{color:var(--muted);font-size:12px}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.overlay{display:none;position:fixed;inset:0;background:#10182788;align-items:center;justify-content:center;padding:15px;z-index:5}.modal{background:white;border-radius:14px;padding:20px;width:min(620px,100%);max-height:90vh;overflow:auto}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:12px;color:var(--muted)}.modal h2{margin-bottom:16px}.modalfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:850px){.kpis{grid-template-columns:repeat(5,150px);overflow-x:auto;padding-bottom:5px}.filters{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.wrap{padding:12px}.filters{grid-template-columns:1fr 1fr}.filters input:first-child{grid-column:1/-1}.formgrid{grid-template-columns:1fr 1fr}header{padding:15px}.kpi-value{font-size:23px}}
+
+.admin-only{display:none}.is-admin .admin-only{display:revert}.is-admin .viewer-only{display:none}
+.status{color:#c7d2e5;font-size:12px}.banner{background:#fff4d6;border:1px solid #f1d58a;color:#6a4b00;padding:10px 14px;border-radius:10px;margin:12px 0}
+.authfield{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.authfield label{font-size:12px;color:var(--muted)}
+</style></head><body>
+<header><div><h1>M29 Management System</h1><small>Pending M29 · <span id="role">Viewer (read-only)</span></small><div class="status" id="status">Loading…</div></div>
+<div class="actions">
+<button class="secondary viewer-only" id="loginBtn">Admin login</button>
+<label class="filebtn secondary admin-only" for="excelFile">Import Excel</label><input id="excelFile" type="file" accept=".xlsx,.xls,.xlsb,.csv" hidden>
+<button class="secondary admin-only" id="exportBtn">Export Excel</button><button class="admin-only" id="addBtn">+ Add M29</button>
+<button class="ghost admin-only" id="logoutBtn">Logout</button>
+</div></header>
+<div class="wrap">
+<div id="banner"></div>
+<div class="kpis" id="kpis"></div>
+<section class="card" style="margin:0 0 15px"><div class="sectionhead"><div><h2>Submission Timeline</h2><p class="hint" style="margin:4px 0 0">Select a date to filter records for that submission day.</p></div><button class="ghost" id="clearDate">Clear date filter</button></div><div class="timeline" id="timeline"></div></section>
+<div class="filters">
+<input id="search" placeholder="Search KPM No. …">
+<select id="lotFilter"><option value="">All LOTs</option></select>
+<select id="respFilter"><option value="">All Responsible</option></select>
+<select id="teamFilter"><option value="">All team states</option><option value="yes">At least one team reached</option><option value="no">No team reached</option></select>
+</div>
+<section class="card"><div class="sectionhead"><h2>Pending M29 Records</h2><span class="hint" id="count"></span></div>
+<div class="tablewrap"><table><thead><tr><th>SR</th><th>LOT</th><th>KPM No.</th><th>Submission Date</th><th>Batching</th><th>Construction</th><th>Accounting</th><th>Security</th><th>Responsible of T2</th><th>Note</th><th class="admin-only">Action</th></tr></thead><tbody id="tbody"></tbody></table></div></section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal"><h2 id="modalTitle">Add M29</h2><form id="recordForm"><div class="formgrid" id="formFields"></div><div class="modalfoot"><button type="button" class="ghost" id="cancelBtn">Cancel</button><button type="submit">Save record</button></div></form></div></div>
+<div class="overlay" id="loginOverlay"><div class="modal" style="width:min(380px,100%)"><h2>Admin login</h2><form id="loginForm">
+<div class="authfield"><label>Email</label><input type="email" id="loginEmail" required autocomplete="username"></div>
+<div class="authfield"><label>Password</label><input type="password" id="loginPass" required autocomplete="current-password"></div>
+<div class="modalfoot"><button type="button" class="ghost" id="loginCancel">Cancel</button><button type="submit">Login</button></div></form></div></div>
+
+<script>
+/* ====== EDIT THESE TWO VALUES (see README) ====== */
+window.M29_CONFIG={
+  SUPABASE_URL:"https://msuahswmycpxzvfnaelg.supabase.co",
+  SUPABASE_ANON_KEY:"sb_publishable_nuTpUlygkRHaqqL-NyRzBA_wMviDSNP"
+};
+/* ================================================= */
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const CFG=window.M29_CONFIG;
+const configured=CFG.SUPABASE_URL&&!CFG.SUPABASE_URL.includes('YOUR-PROJECT')&&CFG.SUPABASE_ANON_KEY&&!CFG.SUPABASE_ANON_KEY.includes('YOUR-ANON');
+const sb=(configured&&window.supabase)?supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY):null;
+const T='m29_records';
+const teams=[['batching','Batching Team Status'],['construction','Construction Team Status'],['accounting','Accounting Team Status'],['security','Security Team Status']];
+const fields=[['sr','SR','number'],['lot','LOT','text'],['kpm','KPM No.','text'],['submission','Submission Date','date'],['batching','Batching Team Status','number'],['construction','Construction Team Status','number'],['accounting','Accounting Team Status','number'],['security','Security Team Status','number'],['responsible','Responsible of T2','text'],['note','Note','text']];
+let records=[],isAdmin=false,selectedDate='',editingId=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reached=v=>v!==null&&v!==''&&Number(v)>0;
+const dateLabel=s=>{if(!s)return '—';let d=new Date(s+'T00:00:00');return isNaN(d)?s:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})};
+const fail=(e,ctx)=>alert((ctx?ctx+': ':'')+(e&&e.message?e.message:e));
+
+/* ---------- data ---------- */
+async function load(){
+  if(!sb){$('status').textContent='Not connected';return}
+  const {data,error}=await sb.from(T).select('*').order('sr',{ascending:true});
+  if(error){$('status').textContent='Load error: '+error.message;return}
+  records=data||[];
+  const last=records.map(r=>r.updated_at).filter(Boolean).sort().pop();
+  $('status').textContent=last?('Last data update: '+new Date(last).toLocaleString('en-GB')):'No data yet';
+  render();
+}
+let loadTimer=null;const loadSoon=()=>{clearTimeout(loadTimer);loadTimer=setTimeout(load,400)};
+
+/* ---------- render ---------- */
+function filtered(){const q=$('search').value.toLowerCase(),lot=$('lotFilter').value,resp=$('respFilter').value,team=$('teamFilter').value;
+return records.filter(r=>(!q||String(r.kpm).toLowerCase().includes(q))&&(!lot||r.lot===lot)&&(!resp||r.responsible===resp)&&(!selectedDate||r.submission===selectedDate)&&(!team||(team==='yes'?teams.some(([k])=>reached(r[k])):teams.every(([k])=>!reached(r[k])))))}
+function pill(v){return v===null||v===''||v===undefined?'<span class="pill unknown">—</span>':reached(v)?'<span class="pill yes">✓</span>':'<span class="pill no">✕</span>'}
+function render(){
+  document.body.classList.toggle('is-admin',isAdmin);
+  $('role').textContent=isAdmin?'Admin':'Viewer (read-only)';
+  $('banner').innerHTML=configured?'':'<div class="banner">The app is not connected yet. Edit SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script (see README).</div>';
+  const data=filtered();
+  $('kpis').innerHTML=`<div class="card"><div class="kpi-label">Total M29</div><div class="kpi-value">${records.length}</div><div class="hint" style="margin-top:4px">Records in register</div></div>`+teams.map(([k,n])=>{const yes=records.filter(r=>reached(r[k])).length,pct=records.length?Math.round(yes/records.length*100):0;return `<div class="card"><div class="teamname">${esc(n.replace(' Team Status',' Team'))}</div><div class="teamcount">${yes} <span class="hint" style="font-size:12px;font-weight:500">/ ${records.length}</span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="teammeta"><span>${records.length-yes} not reached</span><b>${pct}%</b></div></div>`}).join('');
+  $('tbody').innerHTML=data.map(r=>`<tr><td>${esc(r.sr)}</td><td>${esc(r.lot)}</td><td><b>${esc(r.kpm)}</b></td><td>${dateLabel(r.submission)}</td>${teams.map(([k])=>`<td>${pill(r[k])}</td>`).join('')}<td>${esc(r.responsible)}</td><td>${esc(r.note)}</td><td class="rowactions admin-only"><button class="secondary" data-edit="${r.id}">Edit</button> <button class="ghost" data-del="${r.id}">Delete</button></td></tr>`).join('')||'<tr><td colspan="11">No matching records</td></tr>';
+  $('count').textContent=`Showing ${data.length} of ${records.length} records`+(selectedDate?` · Date: ${dateLabel(selectedDate)}`:'');
+  const dates=[...new Set(records.map(r=>r.submission).filter(Boolean))].sort();
+  $('timeline').innerHTML=dates.map(d=>{const dr=records.filter(r=>r.submission===d);return `<div class="time-row ${selectedDate===d?'active':''}"><div class="time-date"><button class="time-select" type="button" data-date="${esc(d)}" aria-pressed="${selectedDate===d}">${dateLabel(d)}</button></div><div class="time-items"><div class="time-count">${dr.length} M29 submitted · tap date to view</div><div class="time-kpms">${dr.map(r=>`<span>${esc(r.kpm)}</span>`).join('')}</div></div></div>`}).join('')||'<span class="hint">No submission dates</span>';
+  const keep=(id,all)=>{const cur=$(id).value;return `<option value="">${all}</option>`};
+  const lc=$('lotFilter').value,rc=$('respFilter').value;
+  $('lotFilter').innerHTML='<option value="">All LOTs</option>'+[...new Set(records.map(r=>r.lot).filter(Boolean))].sort().map(x=>`<option ${lc===x?'selected':''}>${esc(x)}</option>`).join('');
+  $('respFilter').innerHTML='<option value="">All Responsible</option>'+[...new Set(records.map(r=>r.responsible).filter(Boolean))].sort().map(x=>`<option ${rc===x?'selected':''}>${esc(x)}</option>`).join('');
+}
+
+/* ---------- events ---------- */
+$('timeline').addEventListener('click',e=>{const b=e.target.closest('button[data-date]');if(!b)return;selectedDate=selectedDate===b.dataset.date?'':b.dataset.date;render()});
+['search','lotFilter','respFilter','teamFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+$('clearDate').onclick=()=>{selectedDate='';render()};
+$('tbody').addEventListener('click',async e=>{
+  const eb=e.target.closest('button[data-edit]'),db=e.target.closest('button[data-del]');
+  if(eb)openForm(records.find(r=>String(r.id)===eb.dataset.edit));
+  if(db){const r=records.find(x=>String(x.id)===db.dataset.del);if(!r||!confirm(`Delete KPM ${r.kpm}?`))return;
+    const {error}=await sb.from(T).delete().eq('id',r.id);if(error)return fail(error,'Delete failed');load()}
+});
+
+/* ---------- add / edit ---------- */
+function openForm(r){editingId=r?r.id:null;$('modalTitle').textContent=r?'Edit M29':'Add M29';
+ $('formFields').innerHTML=fields.map(([k,l,t])=>`<div class="field"><label>${l}</label><input name="${k}" type="${t}" ${k==='kpm'?'required':''} value="${esc(r?.[k]??'')}" ${k==='sr'?'readonly':''}></div>`).join('');
+ $('overlay').style.display='flex'}
+$('addBtn').onclick=()=>openForm(null);$('cancelBtn').onclick=()=>$('overlay').style.display='none';
+$('recordForm').onsubmit=async e=>{e.preventDefault();
+ const o=Object.fromEntries(new FormData(e.target));
+ const obj={lot:o.lot||'',kpm:o.kpm.trim(),submission:o.submission||null,responsible:o.responsible||'',note:o.note||''};
+ for(const [k] of teams)obj[k]=o[k]===''?null:Number(o[k]);
+ let res;
+ if(editingId){res=await sb.from(T).update(obj).eq('id',editingId)}
+ else{obj.sr=Math.max(0,...records.map(r=>Number(r.sr)||0))+1;res=await sb.from(T).insert(obj)}
+ if(res.error)return fail(res.error.code==='23505'?'KPM No. already exists':res.error,'Save failed');
+ $('overlay').style.display='none';load()};
+
+/* ---------- auth ---------- */
+$('loginBtn').onclick=()=>{$('loginOverlay').style.display='flex'};
+$('loginCancel').onclick=()=>$('loginOverlay').style.display='none';
+$('loginForm').onsubmit=async e=>{e.preventDefault();if(!sb)return fail('App is not connected yet.');
+ const {error}=await sb.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPass').value});
+ if(error)return fail(error,'Login failed');$('loginOverlay').style.display='none';$('loginPass').value=''};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut()};
+
+/* ---------- Excel import / export ---------- */
+const ymd=d=>{const x=new Date(d.getTime()+12*36e5);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`};
+$('excelFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{
+  if(!window.XLSX)throw Error('Excel library could not load. Check the internet connection.');
+  const wb=XLSX.read(await f.arrayBuffer(),{cellDates:true});
+  const ws=wb.Sheets['Pending M29']||wb.Sheets[wb.SheetNames[0]];
+  const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const hi=arr.findIndex(row=>row.some(v=>String(v||'').trim()==='KPM No.'));
+  if(hi<0)throw Error('Could not find the "KPM No." header in the first sheet.');
+  const h=arr[hi].map(x=>String(x||'').trim());const idx=n=>h.indexOf(n);
+  const st=n=>{const v=row[idx(n)];if(v==null||v==='')return null;if(v instanceof Date)return Math.max(0,Math.round((v-new Date(1899,11,30))/864e5));return Number(v)||0};
+  let row,imported=[];
+  for(row of arr.slice(hi+1)){
+   const kpm=row[idx('KPM No.')];if(kpm==null||String(kpm).trim()==='')continue;
+   const note=String(row[idx('Note')]||'').trim();if(note.toLowerCase()==='signed')continue;
+   let d=row[idx('Submission Date')];
+   if(d instanceof Date)d=ymd(d);else if(typeof d==='number'){const p=XLSX.SSF.parse_date_code(d);d=`${p.y}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`}else d=String(d||'').slice(0,10)||null;
+   imported.push({sr:Number(row[idx('SR')])||imported.length+1,lot:String(row[idx('LOT')]??''),kpm:String(kpm).trim(),submission:d,
+    batching:st('Batching Team Status'),construction:st('Construction Team Status'),accounting:st('Accounting Team Status'),security:st('Security Team Status'),
+    responsible:String(row[idx('Responsible of T2')]||'').trim(),note});
+  }
+  if(!imported.length)throw Error('No M29 records found.');
+  const seen=new Set(),dup=[];imported.forEach(r=>{seen.has(r.kpm)?dup.push(r.kpm):seen.add(r.kpm)});
+  if(dup.length)throw Error('Duplicate KPM No. in the file: '+[...new Set(dup)].join(', '));
+  const have=new Set(records.map(r=>r.kpm));
+  const added=imported.filter(r=>!have.has(r.kpm)).length,updated=imported.length-added;
+  const toRemove=records.filter(r=>!seen.has(r.kpm));
+  if(!confirm(`Import from "Pending M29":\n• ${added} new\n• ${updated} updated\n• ${toRemove.length} removed (not in the file)\n\nContinue?`))return;
+  const {error}=await sb.from(T).upsert(imported,{onConflict:'kpm'});if(error)throw error;
+  if(toRemove.length){const {error:e2}=await sb.from(T).delete().in('id',toRemove.map(r=>r.id));if(e2)throw e2}
+  selectedDate='';await load();alert('Import completed.');
+ }catch(err){fail(err,'Import failed')}finally{e.target.value=''}};
+$('exportBtn').onclick=()=>{if(!window.XLSX)return alert('Excel library could not load.');
+ const data=[['SR','LOT','KPM No.','Submission Date','Batching Team Status','Construction Team Status','Accounting Team Status','Security Team Status','Responsible of T2','Note'],...records.map(r=>[r.sr,r.lot,r.kpm,r.submission,r.batching,r.construction,r.accounting,r.security,r.responsible,r.note])];
+ const ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Pending M29');XLSX.writeFile(wb,'Pending_M29_Export.xlsx')};
+
+/* ---------- start ---------- */
+render();
+if(sb){
+ sb.auth.getSession().then(({data})=>{isAdmin=!!data.session;render()});
+ sb.auth.onAuthStateChange((_e,session)=>{isAdmin=!!session;render()});
+ sb.channel('m29-live').on('postgres_changes',{event:'*',schema:'public',table:T},loadSoon).subscribe();
+ setInterval(()=>{if($('overlay').style.display!=='flex')load()},60000);
+ load();
+}else{$('status').textContent=configured?'Supabase library failed to load':'Not connected'}
+</script></body></html>
